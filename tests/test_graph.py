@@ -20,7 +20,10 @@ class GraphTests(unittest.TestCase):
         self.assertEqual(graph, {"A": ["B"], "B": []})
 
     def test_reverse(self):
-        self.assertEqual(reverse_graph(self.fixture)["D"], ["B", "C"])
+        backward = reverse_graph(self.fixture)
+        self.assertEqual(backward["D"], ["B", "C"])
+        graph = collect_graph("D", backward.__getitem__, 2, "")
+        self.assertEqual(graph["D"], ["B", "C"])
 
     def test_pom_direct_only(self):
         pom = b"""<project><dependencies>

@@ -49,7 +49,8 @@ def main(argv: list[str] | None = None) -> int:
             all_nodes = {name: list(children)
                          for name, children in fixture.items()}
             backward = reverse_graph(all_nodes)
-            graph = collect_graph(args.package, backward, args.max_depth,
+            graph = collect_graph(args.package, backward.__getitem__,
+                                  args.max_depth,
                                   args.exclude)
         else:
             graph = collect_graph(args.package, source, args.max_depth,
