@@ -5,9 +5,11 @@ from pathlib import Path
 import re
 from urllib.parse import urlparse
 from urllib.request import urlopen
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as xml_tree
 
 from .model import Package
+
+MAX_POM_BYTES = 2_000_000
 
 
 class RepositoryError(Exception):
@@ -20,16 +22,23 @@ def load_fixture(path: Path) -> dict[str, list[str]]:
     except (OSError, ValueError) as error:
         raise RepositoryError(f"Cannot read fixture: {error}") from error
     if not isinstance(data, dict) or not all(
-        isinstance(key, str) and isinstance(value, list) and
-        all(isinstance(item, str) for item in value)
-        for key, value in data.items()
+        _valid_fixture_entry(key, value) for key, value in data.items()
     ):
         raise RepositoryError("Fixture must map names to arrays of names")
+    _validate_fixture_graph(data)
+    return data
+
+
+def _valid_fixture_entry(key: object, value: object) -> bool:
+    return (isinstance(key, str) and isinstance(value, list)
+            and all(isinstance(item, str) for item in value))
+
+
+def _validate_fixture_graph(data: dict[str, list[str]]) -> None:
     if not all(re.fullmatch(r"[A-Z]+", name) for name in data):
         raise RepositoryError("Fixture package names must be uppercase")
     if any(child not in data for values in data.values() for child in values):
         raise RepositoryError("Fixture references an undefined package")
-    return data
 
 
 class MavenRepository:
@@ -52,10 +61,10 @@ class MavenRepository:
                f"{package.version}/{filename}")
         try:
             with urlopen(url, timeout=12) as response:
-                data = response.read(2_000_001)
+                data = response.read(MAX_POM_BYTES + 1)
         except Exception as error:
             raise RepositoryError(f"Cannot fetch {url}: {error}") from error
-        if len(data) > 2_000_000:
+        if len(data) > MAX_POM_BYTES:
             raise RepositoryError("POM exceeds 2 MB limit")
         return parse_pom(data)
 
@@ -63,12 +72,26 @@ class MavenRepository:
 def parse_pom(data: bytes) -> list[str]:
     """Read direct, concrete dependencies from the project section."""
     try:
-        root = ET.fromstring(data)
-    except ET.ParseError as error:
+        root = xml_tree.fromstring(data)
+    except xml_tree.ParseError as error:
         raise RepositoryError(f"Invalid POM XML: {error}") from error
     namespace = root.tag.partition("}")[0] + "}" if "}" in root.tag else ""
+
     def tag(name: str) -> str:
         return namespace + name
+
+    properties = _pom_properties(root, tag)
+    direct = root.find(tag("dependencies"))
+    if direct is None:
+        return []
+    coordinates = (
+        _dependency_coordinate(dependency, tag, properties)
+        for dependency in direct.findall(tag("dependency"))
+    )
+    return sorted({name for name in coordinates if name is not None})
+
+
+def _pom_properties(root, tag) -> dict[str, str]:
     properties = {}
     props = root.find(tag("properties"))
     if props is not None:
@@ -81,23 +104,22 @@ def parse_pom(data: bytes) -> list[str]:
         if value:
             properties[f"project.{name}"] = value
             properties[f"pom.{name}"] = value
-    result = []
-    direct = root.find(tag("dependencies"))
-    if direct is None:
-        return result
-    for dependency in direct.findall(tag("dependency")):
-        scope = dependency.findtext(tag("scope"), "compile")
-        optional = dependency.findtext(tag("optional"), "false")
-        if scope in {"test", "provided", "system", "import"}:
-            continue
-        if optional.strip().lower() == "true":
-            continue
-        values = [dependency.findtext(tag(part), "")
-                  for part in ("groupId", "artifactId", "version")]
-        values = [resolve(value, properties) for value in values]
-        if all(values) and not any("${" in value for value in values):
-            result.append(":".join(values))
-    return sorted(set(result))
+    return properties
+
+
+def _dependency_coordinate(dependency, tag, properties) -> str | None:
+    scope = dependency.findtext(tag("scope"), "compile")
+    optional = dependency.findtext(tag("optional"), "false")
+    if scope in {"test", "provided", "system", "import"}:
+        return None
+    if optional.strip().lower() == "true":
+        return None
+    values = [dependency.findtext(tag(part), "")
+              for part in ("groupId", "artifactId", "version")]
+    values = [resolve(value, properties) for value in values]
+    if not all(values) or any("${" in value for value in values):
+        return None
+    return ":".join(values)
 
 
 def resolve(value: str, properties: dict[str, str]) -> str:

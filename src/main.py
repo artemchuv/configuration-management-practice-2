@@ -11,8 +11,10 @@ from .repository import MavenRepository, RepositoryError, load_fixture
 
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description="Maven dependency graph")
-    result.add_argument("--package", required=True,
-                        help="group:artifact:version, or uppercase fixture name")
+    result.add_argument(
+        "--package", required=True,
+        help="group:artifact:version, or uppercase fixture name",
+    )
     result.add_argument("--repository", required=True,
                         help="Maven repository URL or fixture JSON path")
     result.add_argument("--test", action="store_true",

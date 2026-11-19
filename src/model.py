@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 from typing import Callable
 
+MAVEN_COORDINATE_PARTS = 3
+
 
 @dataclass(frozen=True, order=True)
 class Package:
@@ -13,7 +15,7 @@ class Package:
     @classmethod
     def parse(cls, value: str) -> "Package":
         parts = value.split(":")
-        if len(parts) != 3 or not all(parts):
+        if len(parts) != MAVEN_COORDINATE_PARTS or not all(parts):
             raise ValueError("Package must be group:artifact:version")
         return cls(*parts)
 
