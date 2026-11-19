@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="480" viewBox="0 0 720 480">
+<rect width="100%" height="100%" fill="#f8fafc"/>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#475569"/></marker></defs>
+<path d="M 570 55 C 645 55 645 143 570 143" fill="none" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M 570 55 C 645 55 645 231 570 231" fill="none" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M 570 231 C 645 231 645 319 570 319" fill="none" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M 570 231 C 645 231 645 407 570 407" fill="none" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+<path d="M 570 319 C 645 319 645 55 570 55" fill="none" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+<rect x="20" y="33" width="550" height="44" rx="8" fill="#dbeafe" stroke="#2563eb"/>
+<text x="36" y="60" font-size="15" font-family="sans-serif">A</text>
+<rect x="20" y="121" width="550" height="44" rx="8" fill="#dbeafe" stroke="#2563eb"/>
+<text x="36" y="148" font-size="15" font-family="sans-serif">B</text>
+<rect x="20" y="209" width="550" height="44" rx="8" fill="#dbeafe" stroke="#2563eb"/>
+<text x="36" y="236" font-size="15" font-family="sans-serif">C</text>
+<rect x="20" y="297" width="550" height="44" rx="8" fill="#dbeafe" stroke="#2563eb"/>
+<text x="36" y="324" font-size="15" font-family="sans-serif">D</text>
+<rect x="20" y="385" width="550" height="44" rx="8" fill="#dbeafe" stroke="#2563eb"/>
+<text x="36" y="412" font-size="15" font-family="sans-serif">E</text>
+</svg>
